@@ -110,13 +110,11 @@ Box ReservationTable::getMinimumBoundingBox(int mobile, const TimedPosition &sta
     return Box(
         Point(
             std::min(startPosition.x, endPosition.x) - xSize / 2,
-            std::min(startPosition.y, endPosition.y) - ySize / 2,
-            start.time
+            std::min(startPosition.y, endPosition.y) - ySize / 2
         ), 
         Point(
             std::max(startPosition.x, endPosition.x) + xSize / 2,
-            std::max(startPosition.y, endPosition.y) + ySize / 2,
-            end.time
+            std::max(startPosition.y, endPosition.y) + ySize / 2
         )
     );
 }

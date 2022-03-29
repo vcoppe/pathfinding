@@ -16,7 +16,7 @@
 namespace bg = boost::geometry;
 namespace bgi = boost::geometry::index;
 
-typedef bg::model::d3::point_xyz<double> Point;
+typedef bg::model::d2::point_xy<double> Point;
 typedef bg::model::box<Point> Box;
 typedef std::pair<Box, int> Value;
 typedef bgi::rtree<Value, bgi::rstar<3>> RTree;
