@@ -25,7 +25,7 @@ void ReservationTable::update(const std::unordered_map<int, Path> &paths)
     for (const auto &pair : paths) {
         const auto mobile = pair.first;
         const auto &path = pair.second;
-        for (int i = 0; i < path.timedPositions.size() - 1; ++i)
+        for (int i = 0; i + 1 < path.timedPositions.size(); ++i)
         {
             auto startPolygon = std::make_shared<Polygon>(), endPolygon = std::make_shared<Polygon>();
             auto polygon = this->getBoundingPolygon(mobile, path.timedPositions[i], path.timedPositions[i+1], startPolygon, endPolygon);
