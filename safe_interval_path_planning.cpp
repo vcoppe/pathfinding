@@ -147,7 +147,17 @@ void SafeIntervalPathPlanning::getSuccessors(int mobile, const State &state)
             }
 
             this->successors.push_back(successor);
-            this->parent[successor] = state;
+            
+            if (successor.g > state.g + edgeCost)
+            {
+                State intermediate{state.vertex, state.intervalId, state.interval, successor.g - edgeCost, state.h};
+                this->parent[intermediate] = state;
+                this->parent[successor] = intermediate;
+            }
+            else
+            {
+                this->parent[successor] = state;
+            }
         }
     }
 }
