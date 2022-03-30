@@ -31,22 +31,30 @@ signed main() {
         mobiles.push_back({AGV, 1, 1, 1});
     }
 
-    std::vector<Position> positions;
+    Graph graph;
     for (int i = 0; i < 20; ++i)
     {
-        positions.push_back({0, 1.0 * i, 0});
+        graph.add(i, {0, 1.0 * i, 0});
     }
+    graph.add(20, {2, 15, 0});
 
-    Graph graph(positions);
-
-    for (int i = 0; i < positions.size() - 1; ++i)
+    for (int i = 0; i < 19; ++i)
     {
-        graph.add({i, i+1, 1.0, &crossingCondition, &costFunction});
+        graph.add({i, i+1, &crossingCondition, &costFunction});
+        graph.add({i+1, i, &crossingCondition, &costFunction});
     }
+    graph.add({15, 20, &crossingCondition, &costFunction});
+    graph.add({20, 15, &crossingCondition, &costFunction});
     
     SafeIntervalPathPlanning planner(graph, mobiles);
 
-    Path path = planner.plan(0, 0, positions.size() - 1, 0);
+    Path path = planner.plan(0, 0, 19, 0);
+    for (auto it = path.timedPositions.begin(); it != path.timedPositions.end(); ++it)
+    {
+        std::cout << it->vertex << " " << it->time << std::endl;
+    }
+
+    path = planner.plan(1, 19, 0, 0);
     for (auto it = path.timedPositions.begin(); it != path.timedPositions.end(); ++it)
     {
         std::cout << it->vertex << " " << it->time << std::endl;

@@ -2,10 +2,8 @@
 
 #include "graph.hpp"
 
-Graph::Graph(const std::vector<Position> &positions) : positions(positions)
+Graph::Graph()
 {
-    this->edges.resize(positions.size());
-    this->reverseEdges.resize(positions.size());
 }
 
 Graph::~Graph()
@@ -14,35 +12,58 @@ Graph::~Graph()
     this->reverseEdges.clear();
 }
 
+void Graph::add(int vertex, const Position &position)
+{
+    this->positions[vertex] = position;
+}
+
+void Graph::add(Edge edge)
+{
+    if (!this->edges.contains(edge.from))
+    {
+        this->edges[edge.from] = std::unordered_map<int, Edge>();
+    }
+    if (!this->reverseEdges.contains(edge.to))
+    {
+        this->reverseEdges[edge.to] = std::unordered_map<int, Edge>();
+    }
+    this->edges[edge.from][edge.to] = edge;
+    this->reverseEdges[edge.to][edge.from] = edge.getReverse();
+}
+
 int Graph::size() const
 {
     return this->edges.size();
 }
 
-Position Graph::getPosition(int vertex) const
+Position Graph::getPosition(int vertex)
 {
     return this->positions[vertex];
 }
 
-const std::vector<Edge> Graph::getEdges(int vertex) const
+const std::unordered_map<int, Edge> Graph::getEdges(int vertex)
 {
     return this->edges[vertex];
 }
 
-const std::vector<Edge> Graph::getReverseEdges(int vertex) const
+const std::unordered_map<int, Edge> Graph::getReverseEdges(int vertex)
 {
     return this->reverseEdges[vertex];
 }
 
-double Graph::manhattanDistance(int from, int to) const
+double Graph::manhattanDistance(int from, int to)
 {
     double dx = this->positions[from].x - this->positions[to].x;
     double dy = this->positions[from].y - this->positions[to].y;
     return std::sqrt(dx * dx + dy * dy);
 }
 
-void Graph::add(Edge edge)
+double Graph::getCost(const Edge &edge, const Mobile &mobile)
 {
-    this->edges[edge.from].push_back(edge);
-    this->reverseEdges[edge.to].push_back(edge.getReverse());
+    return edge.costFunction(mobile, this->manhattanDistance(edge.from, edge.to));
+}
+
+double Graph::getCost(int from, int to, const Mobile &mobile)
+{
+    return this->edges[from][to].costFunction(mobile, this->manhattanDistance(from, to));
 }

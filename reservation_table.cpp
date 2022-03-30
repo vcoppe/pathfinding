@@ -117,13 +117,13 @@ std::vector<Interval> ReservationTable::getCollisionIntervals(int mobile, int fr
     return collisionIntervals;
 }
 
-Polygon ReservationTable::getBoundingPolygon(int mobile, const TimedPosition &start, const TimedPosition &end) const
+Polygon ReservationTable::getBoundingPolygon(int mobile, const TimedPosition &start, const TimedPosition &end)
 {
     return this->getBoundingPolygon(mobile, start, end, nullptr, nullptr);
 }
 
 Polygon ReservationTable::getBoundingPolygon(int mobile, const TimedPosition &start, const TimedPosition &end,
-    std::shared_ptr<Polygon> startPolygon, std::shared_ptr<Polygon> endPolygon) const
+    std::shared_ptr<Polygon> startPolygon, std::shared_ptr<Polygon> endPolygon)
 {
     if (start.vertex == end.vertex)
     {
@@ -237,7 +237,7 @@ Polygon ReservationTable::getBoundingPolygon(int mobile, const TimedPosition &st
 }
 
 Interval ReservationTable::getCollisionInterval(const Polygon &edgePolygon, const Polygon &movePolygon, const Polygon &startPolygon, const Polygon &endPolygon,
-    const TimedPosition &start, const TimedPosition &end) const
+    const TimedPosition &start, const TimedPosition &end)
 {
     std::deque<Polygon> collisionPolygons;
     bg::intersection(edgePolygon, movePolygon, collisionPolygons);
@@ -248,10 +248,9 @@ Interval ReservationTable::getCollisionInterval(const Polygon &edgePolygon, cons
     }
 
     auto &collisionPolygon = collisionPolygons[0];
-    auto startPosition = this->graph.getPosition(start.vertex), endPosition = this->graph.getPosition(end.vertex);
     auto distanceBeforeCollision = bg::distance(startPolygon, collisionPolygon);
     auto distanceAfterCollision = bg::distance(collisionPolygon, endPolygon);
-    auto moveDistance = std::sqrt((startPosition.x - endPosition.x) * (startPosition.x - endPosition.x) + (startPosition.y - endPosition.y) * (startPosition.y - endPosition.y));
+    auto moveDistance = this->graph.manhattanDistance(start.vertex, end.vertex);
     auto timeBeforeCollision = (end.time - start.time) * distanceBeforeCollision / moveDistance;
     auto timeAfterCollision = (end.time - start.time) * distanceAfterCollision / moveDistance;
 

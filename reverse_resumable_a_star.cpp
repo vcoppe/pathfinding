@@ -45,21 +45,24 @@ double ReverseResumableAStar::getHeuristic(int vertex)
             continue;
         }
 
-        if (current.vertex == vertex) {
+        if (current.vertex == vertex)
+        {
             return this->distance[vertex];
         }
 
         this->queue.erase(it);
         this->closed.insert(current.vertex);
 
-        for (const auto &edge : this->graph.getReverseEdges(current.vertex))
+        for (const auto &pair : this->graph.getReverseEdges(current.vertex))
         {
+            const auto &edge = pair.second;
+
             if (!edge.canCross(this->mobiles[this->mobile]))
             {
                 continue;
             }
 
-            auto edgeCost = edge.getCost(this->mobiles[this->mobile]);
+            auto edgeCost = this->graph.getCost(edge, this->mobiles[this->mobile]);
 
             double successorDistance = current.g + edgeCost;
 

@@ -22,11 +22,12 @@ Path SafeIntervalPathPlanning::plan(int mobile, int from, int to, double start)
         this->paths.erase(it);
     }
 
-    this->reverseResumableAStar.init(mobile, from, to);
     this->reservationTable.update(this->paths);
+    this->reverseResumableAStar.init(mobile, from, to);
 
     auto path = this->findPath(mobile, from, to, start);
     this->reservePath(mobile, path);
+
     return path;
 }
 
@@ -35,6 +36,7 @@ Path SafeIntervalPathPlanning::findPath(int mobile, int from, int to, double sta
     this->distance.clear();
     this->visited.clear();
     this->queue.clear();
+    this->parent.clear();
 
     auto rootSafeIntervals = this->reservationTable.getSafeIntervals(mobile, from);
     auto it = std::lower_bound(rootSafeIntervals.rbegin(), rootSafeIntervals.rend(), start, [](const Interval& interval, double value){
@@ -66,7 +68,7 @@ Path SafeIntervalPathPlanning::findPath(int mobile, int from, int to, double sta
 
         if (current.vertex == to)
         {
-            return this->getPath(current);
+            return this->getPath(mobile, current);
         }
 
         this->getSuccessors(mobile, current);
@@ -84,14 +86,16 @@ void SafeIntervalPathPlanning::getSuccessors(int mobile, const State &state)
 {
     this->successors.clear();
 
-    for (const auto &edge : this->graph.getEdges(state.vertex))
+    for (const auto &pair : this->graph.getEdges(state.vertex))
     {
+        const auto &edge = pair.second;
+
         if (!edge.canCross(this->mobiles[mobile]))
         {
             continue;
         }
 
-        auto edgeCost = edge.getCost(this->mobiles[mobile]);
+        auto edgeCost = this->graph.getCost(edge, this->mobiles[mobile]);
         auto h = this->reverseResumableAStar.getHeuristic(edge.to);
 
         auto safeIntervals = this->reservationTable.getSafeIntervals(mobile, edge.to);
@@ -147,28 +151,27 @@ void SafeIntervalPathPlanning::getSuccessors(int mobile, const State &state)
             }
 
             this->successors.push_back(successor);
-            
-            if (successor.g > state.g + edgeCost)
-            {
-                State intermediate{state.vertex, state.intervalId, state.interval, successor.g - edgeCost, state.h};
-                this->parent[intermediate] = state;
-                this->parent[successor] = intermediate;
-            }
-            else
-            {
-                this->parent[successor] = state;
-            }
+            this->parent[successor] = state;
         }
     }
 }
 
-Path SafeIntervalPathPlanning::getPath(const State &state)
+Path SafeIntervalPathPlanning::getPath(int mobile, const State &state)
 {
     Path path;
 
     auto current = state;
     while (true)
     {
+        if (!path.timedPositions.empty())
+        {
+            const auto &previous = path.timedPositions.back();
+            auto edgeCost = this->graph.getCost(current.vertex, previous.vertex, this->mobiles[mobile]);
+            if (previous.time > current.g + edgeCost)
+            {
+                path.timedPositions.push_back({current.vertex, previous.time - edgeCost});
+            }
+        }
         path.timedPositions.push_back({current.vertex, current.g});
         if (this->parent.contains(current))
         {

@@ -25,7 +25,7 @@ private:
         }
     };
 
-    const Graph graph;
+    Graph graph;
     const std::vector<Mobile> mobiles;
     int mobile, from;
     std::unordered_map<int, double> distance;

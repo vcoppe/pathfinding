@@ -40,17 +40,17 @@ struct Interval
 class ReservationTable
 {
 private:
-    const Graph graph;
+    Graph graph;
     const std::vector<Mobile> mobiles;
     std::unordered_map<int, Path> paths;
     std::unordered_map<int, Polygon> movePolygons, startPolygons, endPolygons;
     std::unique_ptr<RTree> rtree;
 
-    Polygon getBoundingPolygon(int mobile, const TimedPosition &start, const TimedPosition &end) const;
+    Polygon getBoundingPolygon(int mobile, const TimedPosition &start, const TimedPosition &end);
     Polygon getBoundingPolygon(int mobile, const TimedPosition &start, const TimedPosition &end,
-        std::shared_ptr<Polygon> startPolygon, std::shared_ptr<Polygon> endPolygon) const;
+        std::shared_ptr<Polygon> startPolygon, std::shared_ptr<Polygon> endPolygon);
     Interval getCollisionInterval(const Polygon &edgePolygon, const Polygon &movePolygon, const Polygon &startPolygon, const Polygon &endPolygon,
-        const TimedPosition &start, const TimedPosition &end) const;
+        const TimedPosition &start, const TimedPosition &end);
 public:
     ReservationTable(const Graph &graph, const std::vector<Mobile> &mobiles);
     ~ReservationTable();

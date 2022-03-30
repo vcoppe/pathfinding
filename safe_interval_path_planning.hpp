@@ -43,7 +43,7 @@ private:
         }
     };
 
-    const Graph graph;
+    Graph graph;
     const std::vector<Mobile> mobiles;
     ReservationTable reservationTable;
     ReverseResumableAStar reverseResumableAStar;
@@ -56,7 +56,7 @@ private:
 
     Path findPath(int mobile, int from, int to, double start);
     void getSuccessors(int mobile, const State &state);
-    Path getPath(const State &state);
+    Path getPath(int mobile, const State &state);
     void reservePath(int mobile, const Path &path);
 public:
     SafeIntervalPathPlanning(const Graph &graph, const std::vector<Mobile> &mobiles);
