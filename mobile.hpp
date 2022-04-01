@@ -10,7 +10,7 @@ enum MobileType
 struct Mobile
 {
     MobileType type;
-    double maxSpeed, length, width;
+    double length, width, maxSpeed;
 };
 
 #endif // MOBILE_HPP

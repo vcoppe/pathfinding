@@ -65,5 +65,12 @@ double Graph::getCost(const Edge &edge, const Mobile &mobile)
 
 double Graph::getCost(int from, int to, const Mobile &mobile)
 {
-    return this->edges[from][to].costFunction(mobile, this->manhattanDistance(from, to));
+    if (from == to)
+    {
+        return 0;
+    }
+    else
+    {
+        return this->edges[from][to].costFunction(mobile, this->manhattanDistance(from, to));
+    }
 }

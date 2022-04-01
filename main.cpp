@@ -26,17 +26,15 @@ double costFunction(const Mobile &mobile, double distance)
 
 signed main() {
     std::vector<Mobile> mobiles;
-    for (int i = 0; i < 5; ++i)
-    {
-        mobiles.push_back({AGV, 1, 1, 1});
-    }
+    mobiles.push_back({Forklift, 0.8, 0.8, 1});
+    mobiles.push_back({AGV, 0.8, 0.8, 1});
 
     Graph graph;
     for (int i = 0; i < 20; ++i)
     {
         graph.add(i, {0, 1.0 * i, 0});
     }
-    graph.add(20, {2, 15, 0});
+    graph.add(20, {1, 15, 0});
 
     for (int i = 0; i < 19; ++i)
     {

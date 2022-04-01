@@ -3,6 +3,7 @@
 
 #include <limits>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include <boost/geometry.hpp>
@@ -43,14 +44,12 @@ private:
     Graph graph;
     const std::vector<Mobile> mobiles;
     std::unordered_map<int, Path> paths;
-    std::unordered_map<int, Polygon> movePolygons, startPolygons, endPolygons;
+    std::unordered_map<int, std::tuple<Polygon, Polygon, Polygon> > polygons;
     std::unique_ptr<RTree> rtree;
 
-    Polygon getBoundingPolygon(int mobile, const TimedPosition &start, const TimedPosition &end);
-    Polygon getBoundingPolygon(int mobile, const TimedPosition &start, const TimedPosition &end,
-        std::shared_ptr<Polygon> startPolygon, std::shared_ptr<Polygon> endPolygon);
-    Interval getCollisionInterval(const Polygon &edgePolygon, const Polygon &movePolygon, const Polygon &startPolygon, const Polygon &endPolygon,
-        const TimedPosition &start, const TimedPosition &end);
+    std::tuple<Polygon,Polygon,Polygon> getBoundingPolygons(int mobile, const TimedPosition &start, const TimedPosition &end);
+    Interval getCollisionInterval(int mobile, int from, int to, const std::tuple<Polygon,Polygon,Polygon> &edgePolygons,
+        const std::tuple<Polygon,Polygon,Polygon> &movePolygons, const TimedPosition &moveStart, const TimedPosition &moveEnd);
 public:
     ReservationTable(const Graph &graph, const std::vector<Mobile> &mobiles);
     ~ReservationTable();
