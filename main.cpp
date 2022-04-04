@@ -1,8 +1,8 @@
 #include <iostream>
 
-#include "mobile.hpp"
 #include "graph.hpp"
 #include "safe_interval_path_planning.hpp"
+#include "structs.hpp"
 
 bool crossingCondition(const Mobile &mobile)
 {
@@ -32,9 +32,9 @@ signed main() {
     Graph graph;
     for (int i = 0; i < 20; ++i)
     {
-        graph.add(i, {0, 1.0 * i, 0});
+        graph.add(i, {1.0 * i, 0, 0});
     }
-    graph.add(20, {1, 15, 0});
+    graph.add(20, {15, 1, 0});
 
     for (int i = 0; i < 19; ++i)
     {
@@ -45,6 +45,18 @@ signed main() {
     graph.add({20, 15, &crossingCondition, &costFunction});
     
     SafeIntervalPathPlanning planner(graph, mobiles);
+
+    std::vector<int> weights(mobiles.size(), 1);
+
+    Polygon polygon;
+
+    bg::append(polygon.outer(), Point(5, -1));
+    bg::append(polygon.outer(), Point(5, 5));
+    bg::append(polygon.outer(), Point(17, 5));
+    bg::append(polygon.outer(), Point(17, -1));
+    bg::append(polygon.outer(), Point(5, -1));
+
+    //planner.addZoneCapacityConstraint(weights, 1, polygon);
 
     Path path = planner.plan(0, 0, 19, 0);
     for (auto it = path.timedPositions.begin(); it != path.timedPositions.end(); ++it)

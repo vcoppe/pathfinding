@@ -53,6 +53,11 @@ const std::unordered_map<int, Edge> Graph::getReverseEdges(int vertex)
 
 double Graph::manhattanDistance(int from, int to)
 {
+    if (from == to)
+    {
+        return 0.0;
+    }
+
     double dx = this->positions[from].x - this->positions[to].x;
     double dy = this->positions[from].y - this->positions[to].y;
     return std::sqrt(dx * dx + dy * dy);

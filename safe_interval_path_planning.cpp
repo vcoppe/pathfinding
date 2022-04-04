@@ -12,6 +12,16 @@ SafeIntervalPathPlanning::SafeIntervalPathPlanning(const Graph &graph, const std
 
 SafeIntervalPathPlanning::~SafeIntervalPathPlanning()
 {
+    this->paths.clear();
+    this->distance.clear();
+    this->visited.clear();
+    this->queue.clear();
+    this->parent.clear();
+}
+
+void SafeIntervalPathPlanning::addZoneCapacityConstraint(const std::vector<int> &weights, int capacity, const Polygon &polygon)
+{
+    this->reservationTable.addZoneCapacityConstraint(weights, capacity, polygon);   
 }
 
 Path SafeIntervalPathPlanning::plan(int mobile, int from, int to, double start)
@@ -39,11 +49,11 @@ Path SafeIntervalPathPlanning::findPath(int mobile, int from, int to, double sta
     this->parent.clear();
 
     auto rootSafeIntervals = this->reservationTable.getSafeIntervals(mobile, from);
-    auto it = std::lower_bound(rootSafeIntervals.rbegin(), rootSafeIntervals.rend(), start, [](const Interval& interval, double value){
-        return interval.start > value;
+    auto it = std::lower_bound(rootSafeIntervals.begin(), rootSafeIntervals.end(), start, [](const Interval& interval, double value){
+        return interval.end < value;
     });
 
-    if (it == rootSafeIntervals.rend())
+    if (it == rootSafeIntervals.end() || start < it->start || start > it->end)
     {
         return {};
     }
@@ -127,15 +137,14 @@ void SafeIntervalPathPlanning::getSuccessors(int mobile, const State &state)
                 continue;
             }
 
-            auto key = successor.g - edgeCost;
-            auto it = std::lower_bound(collisionIntervals.rbegin(), collisionIntervals.rend(), key, [](const Interval& interval, double value){
-                return interval.start > value;
+            auto it = std::lower_bound(collisionIntervals.begin(), collisionIntervals.end(), successor.g - edgeCost, [](const Interval& interval, double value){
+                return interval.end < value;
             });
 
-            if (it != collisionIntervals.rend())
+            if (it != collisionIntervals.end())
             {
                 auto collisionInterval = *it;
-                if (successor.g - edgeCost < collisionInterval.end) { // collision
+                if (successor.g - edgeCost >= collisionInterval.start) { // collision
                     successor.g = collisionInterval.end + edgeCost;
 
                     if (successor.g - edgeCost > state.interval.end || successor.g > safeInterval.end)

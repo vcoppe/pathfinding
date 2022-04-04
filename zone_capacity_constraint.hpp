@@ -1,21 +1,33 @@
 #ifndef ZONE_CAPACITY_CONSTRAINT_HPP
 #define ZONE_CAPACITY_CONSTRAINT_HPP
 
-#include <boost/icl/interval_map.hpp>
+#include <unordered_map>
 
-using namespace boost::icl;
+#include <boost/geometry.hpp>
+#include <boost/geometry/geometries/geometries.hpp>
+
+#include "graph.hpp"
+#include "structs.hpp"
 
 class ZoneCapacityConstraint
 {
 private:
-    int *weight, maxSum;
-    interval_map<time_t, unsigned int> map;
+    Graph graph;
+    const std::vector<Mobile> mobiles;
+    const std::vector<int> &weights;
+    const int capacity;
+    std::vector<std::pair<double, int> > consumptions;
+    std::vector<Interval> fullCapacityIntervals;
 public:
-    ZoneCapacityConstraint(/* args */);
+    ZoneCapacityConstraint(const Graph &graph, const std::vector<Mobile> &mobiles, const std::vector<int> &weights, int capacity, const Polygon &polygon);
     ~ZoneCapacityConstraint();
 
-    void reserve(unsigned int agentId, time_t start, time_t end);
-    bool isAvailable(unsigned int agentId, time_t start, time_t end);
+    const Polygon polygon;
+
+    void reset();
+    void add(int mobile, const TimedPosition &start, const TimedPosition &end, const std::tuple<Polygon, Polygon, Polygon> &polygons);
+    void build();
+    void addViolationIntervals(int mobile, int from, int to, const std::tuple<Polygon, Polygon, Polygon> &polygons, std::vector<Interval> &collisionIntervals);
 };
 
 #endif // ZONE_CAPACITY_CONSTRAINT_HPP

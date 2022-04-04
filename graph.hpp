@@ -8,7 +8,7 @@
 #include <boost/function.hpp>
 #include <boost/functional/hash.hpp>
 
-#include "mobile.hpp"
+#include "structs.hpp"
 
 struct Position
 {

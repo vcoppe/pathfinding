@@ -10,6 +10,9 @@ ReverseResumableAStar::ReverseResumableAStar(const Graph &graph, const std::vect
 
 ReverseResumableAStar::~ReverseResumableAStar()
 {
+    this->distance.clear();
+    this->queue.clear();
+    this->closed.clear();
 }
 
 void ReverseResumableAStar::init(int mobile, int from, int to)

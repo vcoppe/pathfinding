@@ -1,5 +1,3 @@
-#include <cmath>
-
 #include "reservation_table.hpp"
 
 ReservationTable::ReservationTable(const Graph &graph, const std::vector<Mobile> &mobiles)
@@ -11,6 +9,18 @@ ReservationTable::ReservationTable(const Graph &graph, const std::vector<Mobile>
 
 ReservationTable::~ReservationTable()
 {
+    this->paths.clear();
+    this->polygons.clear();
+
+    if (this->rtree)
+    {
+        this->rtree->clear();
+    }
+}
+
+void ReservationTable::addZoneCapacityConstraint(const std::vector<int> &weights, int capacity, const Polygon &polygon)
+{
+    this->constraints.push_back(ZoneCapacityConstraint(this->graph, this->mobiles, weights, capacity, polygon));
 }
 
 void ReservationTable::update(const std::unordered_map<int, Path> &paths)
@@ -19,6 +29,11 @@ void ReservationTable::update(const std::unordered_map<int, Path> &paths)
     this->polygons.clear();
     std::vector<Value> values;
     Box box;
+
+    for (auto &constraint : this->constraints)
+    {
+        constraint.reset();
+    }
 
     for (const auto &pair : paths) {
         const auto mobile = pair.first;
@@ -30,7 +45,17 @@ void ReservationTable::update(const std::unordered_map<int, Path> &paths)
             auto id = mobile + this->mobiles.size() * i;
             values.push_back({box, id});
             this->polygons[id] = polygons;
+
+            for (auto &constraint : this->constraints)
+            {
+                constraint.add(mobile, path.timedPositions[i], path.timedPositions[i+1], polygons);
+            }
         }
+    }
+
+    for (auto &constraint : this->constraints)
+    {
+        constraint.build();
     }
 
     this->rtree = std::make_unique<RTree>(values);
@@ -57,6 +82,12 @@ std::vector<Interval> ReservationTable::getSafeIntervals(int mobile, int vertex)
             collisionIntervals.push_back(collisionInterval);
         }
     }));
+
+    for (auto &constraint : this->constraints)
+    {
+        constraint.addViolationIntervals(mobile, vertex, vertex, polygons, collisionIntervals);
+    }
+
     std::sort(collisionIntervals.begin(), collisionIntervals.end());
 
     std::vector<Interval> safeIntervals;
@@ -98,13 +129,19 @@ std::vector<Interval> ReservationTable::getCollisionIntervals(int mobile, int fr
             collisionIntervals.push_back(collisionInterval);
         }
     }));
+
+    for (auto &constraint : this->constraints)
+    {
+        constraint.addViolationIntervals(mobile, from, to, polygons, collisionIntervals);
+    }
+
     std::sort(collisionIntervals.begin(), collisionIntervals.end());
 
     for (int i = collisionIntervals.size() - 2; i >= 0; i--)
     {
-        if (collisionIntervals[i].end >= collisionIntervals[i+1].start)
+        while (i + 1 < collisionIntervals.size() && collisionIntervals[i].end >= collisionIntervals[i+1].start)
         {
-            collisionIntervals[i].end = collisionIntervals[i+1].end;
+            collisionIntervals[i].end = std::max(collisionIntervals[i].end, collisionIntervals[i+1].end);
             collisionIntervals.erase(collisionIntervals.begin() + i + 1);
         }
     }
@@ -112,7 +149,7 @@ std::vector<Interval> ReservationTable::getCollisionIntervals(int mobile, int fr
     return collisionIntervals;
 }
 
-std::tuple<Polygon,Polygon,Polygon> ReservationTable::getBoundingPolygons(int mobile, const TimedPosition &start, const TimedPosition &end)
+std::tuple<Polygon, Polygon, Polygon> ReservationTable::getBoundingPolygons(int mobile, const TimedPosition &start, const TimedPosition &end)
 {
     if (start.vertex == end.vertex)
     {
@@ -178,8 +215,8 @@ std::tuple<Polygon,Polygon,Polygon> ReservationTable::getBoundingPolygons(int mo
 }
 
 // get the interval for which starting to cross the edge will cause a collision with the given move
-Interval ReservationTable::getCollisionInterval(int mobile, int from, int to, const std::tuple<Polygon,Polygon,Polygon> &edgePolygons,
-    const std::tuple<Polygon,Polygon,Polygon> &movePolygons, const TimedPosition &moveStart, const TimedPosition &moveEnd)
+Interval ReservationTable::getCollisionInterval(int mobile, int from, int to, const std::tuple<Polygon, Polygon, Polygon> &edgePolygons,
+    const std::tuple<Polygon, Polygon, Polygon> &movePolygons, const TimedPosition &moveStart, const TimedPosition &moveEnd)
 {
     std::deque<Polygon> collisionPolygons;
     bg::intersection(std::get<0>(edgePolygons), std::get<0>(movePolygons), collisionPolygons);
@@ -189,7 +226,6 @@ Interval ReservationTable::getCollisionInterval(int mobile, int from, int to, co
         return {std::numeric_limits<double>::max(), 0};
     }
     
-
     auto &collisionPolygon = collisionPolygons[0];
 
     auto moveStartPosition = this->graph.getPosition(moveStart.vertex);
@@ -212,7 +248,7 @@ Interval ReservationTable::getCollisionInterval(int mobile, int from, int to, co
     auto edgeAngle = edgeDistance > 0 ? std::atan2(egdeEndPosition.y - edgeStartPosition.y, egdeEndPosition.x - edgeStartPosition.x) : 0;
     
     Interval result;
-    if (std::abs(moveAngle - edgeAngle) < 1e-2) // travelling in same direction
+    if (moveDistance > 0 && edgeDistance > 0 && std::abs(moveAngle - edgeAngle) < 1e-3) // travelling in same direction
     {
         result.start = std::min(
             moveStart.time + moveTimeBeforeCollision - edgeTimeBeforeCollision, 

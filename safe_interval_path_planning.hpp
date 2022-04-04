@@ -7,10 +7,10 @@
 
 #include <boost/functional/hash.hpp>
 
-#include "mobile.hpp"
 #include "graph.hpp"
 #include "reservation_table.hpp"
 #include "reverse_resumable_a_star.hpp"
+#include "structs.hpp"
 
 class SafeIntervalPathPlanning
 {
@@ -62,6 +62,7 @@ public:
     SafeIntervalPathPlanning(const Graph &graph, const std::vector<Mobile> &mobiles);
     ~SafeIntervalPathPlanning();
 
+    void addZoneCapacityConstraint(const std::vector<int> &weights, int capacity, const Polygon &polygon);
     Path plan(int mobile, int from, int to, double start);
 };
 
