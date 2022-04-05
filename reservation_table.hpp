@@ -9,6 +9,7 @@
 
 #include "graph.hpp"
 #include "structs.hpp"
+#include "utils.hpp"
 #include "zone_capacity_constraint.hpp"
 
 class ReservationTable

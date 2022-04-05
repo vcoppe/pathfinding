@@ -8,6 +8,7 @@
 
 #include "graph.hpp"
 #include "structs.hpp"
+#include "utils.hpp"
 
 class ZoneCapacityConstraint
 {

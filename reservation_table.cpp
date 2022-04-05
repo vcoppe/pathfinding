@@ -137,14 +137,7 @@ std::vector<Interval> ReservationTable::getCollisionIntervals(int mobile, int fr
 
     std::sort(collisionIntervals.begin(), collisionIntervals.end());
 
-    for (int i = collisionIntervals.size() - 2; i >= 0; i--)
-    {
-        while (i + 1 < collisionIntervals.size() && collisionIntervals[i].end >= collisionIntervals[i+1].start)
-        {
-            collisionIntervals[i].end = std::max(collisionIntervals[i].end, collisionIntervals[i+1].end);
-            collisionIntervals.erase(collisionIntervals.begin() + i + 1);
-        }
-    }
+    mergeIntervals(collisionIntervals);
 
     return collisionIntervals;
 }
@@ -180,8 +173,6 @@ std::tuple<Polygon, Polygon, Polygon> ReservationTable::getBoundingPolygons(int 
         auto c = this->mobiles[mobile].length * std::sin(moveAngle) / 2;
         auto d = this->mobiles[mobile].width * std::cos(moveAngle) / 2;
 
-        Polygon polygon, startPolygon, endPolygon;
-
         Point startRearRight(startPosition.x - a + b, startPosition.y - c - d);
         Point startRearLeft(startPosition.x - a - b, startPosition.y - c + d);
         Point startFrontRight(startPosition.x + a + b, startPosition.y + c - d);
@@ -191,24 +182,9 @@ std::tuple<Polygon, Polygon, Polygon> ReservationTable::getBoundingPolygons(int 
         Point endFrontRight(endPosition.x + a + b, endPosition.y + c - d);
         Point endFrontLeft(endPosition.x + a - b, endPosition.y + c + d);
 
-        // construct polygons with vertices in CCW order
-        bg::append(polygon.outer(), startRearRight);
-        bg::append(polygon.outer(), startRearLeft);
-        bg::append(polygon.outer(), endFrontLeft);
-        bg::append(polygon.outer(), endFrontRight);
-        bg::append(polygon.outer(), startRearRight);
-        
-        bg::append(startPolygon.outer(), startRearRight);
-        bg::append(startPolygon.outer(), startRearLeft);
-        bg::append(startPolygon.outer(), startFrontLeft);
-        bg::append(startPolygon.outer(), startFrontRight);
-        bg::append(startPolygon.outer(), startRearRight);
-        
-        bg::append(endPolygon.outer(), endRearRight);
-        bg::append(endPolygon.outer(), endRearLeft);
-        bg::append(endPolygon.outer(), endFrontLeft);
-        bg::append(endPolygon.outer(), endFrontRight);
-        bg::append(endPolygon.outer(), endRearRight);
+        auto polygon = getPolygon({startRearRight, startRearLeft, endFrontLeft, endFrontRight, startRearRight});
+        auto startPolygon = getPolygon({startRearRight, startRearLeft, startFrontLeft, startFrontRight, startRearRight});
+        auto endPolygon = getPolygon({endRearRight, endRearLeft, endFrontLeft, endFrontRight, endRearRight});
 
         return {polygon, startPolygon, endPolygon};
     }

@@ -12,6 +12,7 @@ set(SOURCE_FILES
     reservation_table.cpp
     reverse_resumable_a_star.cpp
     safe_interval_path_planning.cpp
+    utils.cpp
     zone_capacity_constraint.cpp)
 
 set(HEADER_FILES
@@ -19,6 +20,8 @@ set(HEADER_FILES
     reservation_table.hpp
     reverse_resumable_a_star.hpp
     safe_interval_path_planning.hpp
+    structs.hpp
+    utils.hpp
     zone_capacity_constraint.hpp)
 
 add_executable(pathfinding ${SOURCE_FILES} ${HEADER_FILES})

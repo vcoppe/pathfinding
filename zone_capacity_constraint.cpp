@@ -61,14 +61,7 @@ void ZoneCapacityConstraint::build()
         consumption += pair.second;
     }
 
-    for (int i = this->fullCapacityIntervals.size() - 2; i >= 0; i--)
-    {
-        while (i + 1 < this->fullCapacityIntervals.size() && this->fullCapacityIntervals[i].end >= this->fullCapacityIntervals[i+1].start)
-        {
-            this->fullCapacityIntervals[i].end = std::max(this->fullCapacityIntervals[i].end, this->fullCapacityIntervals[i+1].end);
-            this->fullCapacityIntervals.erase(this->fullCapacityIntervals.begin() + i + 1);
-        }
-    }
+    mergeIntervals(this->fullCapacityIntervals);
 }
 
 void ZoneCapacityConstraint::addViolationIntervals(int mobile, int from, int to, const std::tuple<Polygon, Polygon, Polygon> &polygons, std::vector<Interval> &collisionIntervals)
