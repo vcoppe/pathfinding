@@ -26,11 +26,14 @@ struct TimedPosition
     }
 };
 
+typedef boost::function<bool (const Mobile &mobile)> EdgeCrossingCondition;
+typedef boost::function<double (const Mobile &mobile, double distance)> EdgeCostFunction;
+
 struct Edge
 {
     int from, to;
-    boost::function<bool (const Mobile &mobile)> crossingCondition;
-    boost::function<double (const Mobile &mobile, double distance)> costFunction;
+    EdgeCrossingCondition crossingCondition;
+    EdgeCostFunction costFunction;
 
     bool canCross(const Mobile &mobile) const
     {
@@ -66,6 +69,8 @@ public:
     double manhattanDistance(int from, int to);
     double getCost(const Edge &edge, const Mobile &mobile);
     double getCost(int from, int to, const Mobile &mobile);
+    void setEdgeCrossingCondition(int from, int to, const EdgeCrossingCondition &crossingCondition);
+    void setEdgeCostFunction(int from, int to, const EdgeCostFunction &costFunction);
 };
 
 #endif // GRAPH_HPP

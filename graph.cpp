@@ -79,3 +79,15 @@ double Graph::getCost(int from, int to, const Mobile &mobile)
         return this->edges[from][to].costFunction(mobile, this->manhattanDistance(from, to));
     }
 }
+
+void Graph::setEdgeCrossingCondition(int from, int to, const EdgeCrossingCondition &crossingCondition)
+{
+    this->edges[from][to].crossingCondition = crossingCondition;
+    this->reverseEdges[to][from].crossingCondition = crossingCondition;
+}
+
+void Graph::setEdgeCostFunction(int from, int to, const EdgeCostFunction &costFunction)
+{
+    this->edges[from][to].costFunction = costFunction;
+    this->reverseEdges[to][from].costFunction = costFunction;
+}
