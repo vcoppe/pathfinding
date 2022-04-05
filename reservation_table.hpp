@@ -1,8 +1,6 @@
 #ifndef RESERVATION_TABLE_HPP
 #define RESERVATION_TABLE_HPP
 
-#include <cmath>
-#include <limits>
 #include <unordered_map>
 #include <utility>
 #include <vector>

@@ -1,3 +1,6 @@
+#include <cmath>
+#include <limits>
+
 #include "reservation_table.hpp"
 
 ReservationTable::ReservationTable(const Graph &graph, const std::vector<Mobile> &mobiles)

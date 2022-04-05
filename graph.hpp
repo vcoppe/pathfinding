@@ -2,11 +2,9 @@
 #define GRAPH_HPP
 
 #include <unordered_map>
-#include <utility>
 #include <vector>
 
 #include <boost/function.hpp>
-#include <boost/functional/hash.hpp>
 
 #include "structs.hpp"
 
