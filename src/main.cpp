@@ -25,7 +25,7 @@ double costFunction(const Mobile &mobile, double distance)
     }
 }
 
-signed main() {
+/*signed main() {
     std::vector<Mobile> mobiles;
     mobiles.push_back({Forklift, 0.8, 0.8, 1});
     mobiles.push_back({AGV, 0.8, 0.8, 1});
@@ -66,4 +66,4 @@ signed main() {
     }
 
     return 0;
-}
+}*/

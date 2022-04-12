@@ -1,27 +1,36 @@
-cmake_minimum_required(VERSION 3.0.0)
+cmake_minimum_required(VERSION 3.14)
 project(pathfinding VERSION 0.1.0)
 
 find_package(Boost)
 include_directories(${Boost_INCLUDE_DIRS})
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++2a -O3 -Wall -Wextra")
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Wall -Wextra")
 
-set(SOURCE_FILES
-    graph.cpp
-    main.cpp
-    reservation_table.cpp
-    reverse_resumable_a_star.cpp
-    safe_interval_path_planning.cpp
-    utils.cpp
-    zone_capacity_constraint.cpp)
+file(GLOB SOURCE_FILES src/*.cpp)
+file(GLOB HEADER_FILES src/*.hpp)
 
-set(HEADER_FILES
-    graph.hpp
-    reservation_table.hpp
-    reverse_resumable_a_star.hpp
-    safe_interval_path_planning.hpp
-    structs.hpp
-    utils.hpp
-    zone_capacity_constraint.hpp)
+add_library(pathfinding ${SOURCE_FILES} ${HEADER_FILES})
 
-add_executable(pathfinding ${SOURCE_FILES} ${HEADER_FILES})
+file(GLOB TEST_FILES test/*.cpp)
+
+include(FetchContent)
+FetchContent_Declare(
+  googletest
+  URL https://github.com/google/googletest/archive/9e712372214d75bb30ec2847a44bf124d48096f3.zip
+)
+
+FetchContent_MakeAvailable(googletest)
+
+enable_testing()
+
+add_executable(pathfinding_test ${TEST_FILES})
+
+target_link_libraries(
+  pathfinding_test
+  pathfinding
+  gtest_main
+)
+
+include(GoogleTest)
+gtest_discover_tests(pathfinding_test)
