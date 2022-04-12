@@ -7,12 +7,12 @@ include_directories(${Boost_INCLUDE_DIRS})
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Wall -Wextra")
 
-file(GLOB SOURCE_FILES src/*.cpp)
-file(GLOB HEADER_FILES src/*.hpp)
+file(GLOB SOURCE_FILES CONFIGURE_DEPENDS src/*.cpp)
+file(GLOB HEADER_FILES CONFIGURE_DEPENDS src/*.hpp)
 
 add_library(pathfinding ${SOURCE_FILES} ${HEADER_FILES})
 
-file(GLOB TEST_FILES test/*.cpp)
+file(GLOB TEST_FILES CONFIGURE_DEPENDS test/*.cpp)
 
 include(FetchContent)
 FetchContent_Declare(
@@ -30,6 +30,7 @@ target_link_libraries(
   pathfinding_test
   pathfinding
   gtest_main
+  gmock_main
 )
 
 include(GoogleTest)
