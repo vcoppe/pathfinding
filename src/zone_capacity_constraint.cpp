@@ -1,6 +1,6 @@
 #include "zone_capacity_constraint.hpp"
 
-ZoneCapacityConstraint::ZoneCapacityConstraint(const Graph &graph, const std::vector<Mobile> &mobiles, const std::vector<int> &weights, int capacity, const Polygon &polygon)
+ZoneCapacityConstraint::ZoneCapacityConstraint(std::shared_ptr<Graph> graph, const std::vector<Mobile> &mobiles, const std::vector<int> &weights, int capacity, const Polygon &polygon)
     : graph(graph)
     , mobiles(mobiles)
     , weights(weights)
@@ -30,7 +30,7 @@ void ZoneCapacityConstraint::add(int mobile, const TimedPosition &start, const T
 
     auto &collisionPolygon = collisionPolygons[0];
 
-    auto distance = this->graph.distance(start.vertex, end.vertex);
+    auto distance = this->graph->distance(start.vertex, end.vertex);
     auto distanceBeforeZone = distance > 0 ? bg::distance(std::get<1>(polygons), collisionPolygon) : 0;
     auto distanceAfterZone = distance > 0 ? bg::distance(collisionPolygon, std::get<2>(polygons)) : 0;
     auto timeBeforeZone = distance > 0 ? (end.time - start.time) * distanceBeforeZone / distance : 0;
@@ -76,9 +76,9 @@ void ZoneCapacityConstraint::addViolationIntervals(int mobile, int from, int to,
 
     auto &collisionPolygon = collisionPolygons[0];
 
-    auto distance = this->graph.distance(from, to);
+    auto distance = this->graph->distance(from, to);
     auto distanceBeforeZone = distance > 0 ? bg::distance(std::get<1>(polygons), collisionPolygon) : 0;
-    auto cost = distance > 0 ? this->graph.getCost(from, to, this->mobiles[mobile]) : 0;
+    auto cost = distance > 0 ? this->graph->getCost(from, to, this->mobiles[mobile]) : 0;
     auto timeBeforeZone = distance > 0 ? cost * distanceBeforeZone / distance : 0;
 
     for (const auto &interval : this->fullCapacityIntervals)

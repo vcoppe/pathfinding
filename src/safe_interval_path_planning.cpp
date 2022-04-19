@@ -2,7 +2,7 @@
 
 #include "safe_interval_path_planning.hpp"
 
-SafeIntervalPathPlanning::SafeIntervalPathPlanning(const Graph &graph, const std::vector<Mobile> &mobiles,
+SafeIntervalPathPlanning::SafeIntervalPathPlanning(std::shared_ptr<Graph> graph, const std::vector<Mobile> &mobiles,
         std::shared_ptr<ReservationTable> reservationTable, std::shared_ptr<ReverseResumableAStar> reverseResumableAStar)
     : graph(graph)
     , mobiles(mobiles)
@@ -11,7 +11,7 @@ SafeIntervalPathPlanning::SafeIntervalPathPlanning(const Graph &graph, const std
 {
 }
 
-SafeIntervalPathPlanning::SafeIntervalPathPlanning(const Graph &graph, const std::vector<Mobile> &mobiles)
+SafeIntervalPathPlanning::SafeIntervalPathPlanning(std::shared_ptr<Graph> graph, const std::vector<Mobile> &mobiles)
     : graph(graph)
     , mobiles(mobiles)
     , reservationTable(std::make_shared<ReservationTable>(graph, mobiles))
@@ -105,7 +105,7 @@ void SafeIntervalPathPlanning::getSuccessors(int mobile, const State &state)
 {
     this->successors.clear();
 
-    for (const auto &pair : this->graph.getEdges(state.vertex))
+    for (const auto &pair : this->graph->getEdges(state.vertex))
     {
         const auto &edge = pair.second;
 
@@ -114,7 +114,7 @@ void SafeIntervalPathPlanning::getSuccessors(int mobile, const State &state)
             continue;
         }
 
-        auto edgeCost = this->graph.getCost(edge, this->mobiles[mobile]);
+        auto edgeCost = this->graph->getCost(edge, this->mobiles[mobile]);
         auto h = this->reverseResumableAStar->getHeuristic(edge.to);
 
         auto safeIntervals = this->reservationTable->getSafeIntervals(mobile, edge.to);
@@ -184,7 +184,7 @@ Path SafeIntervalPathPlanning::getPath(int mobile, const State &state)
         if (!path.timedPositions.empty())
         {
             const auto &previous = path.timedPositions.back();
-            auto edgeCost = this->graph.getCost(current.vertex, previous.vertex, this->mobiles[mobile]);
+            auto edgeCost = this->graph->getCost(current.vertex, previous.vertex, this->mobiles[mobile]);
             if (previous.time > current.g + edgeCost)
             {
                 path.timedPositions.push_back({current.vertex, previous.time - edgeCost});

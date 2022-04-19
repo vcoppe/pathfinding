@@ -25,14 +25,14 @@ private:
         }
     };
 
-    Graph graph;
+    std::shared_ptr<Graph> graph;
     const std::vector<Mobile> mobiles;
     int mobile, from;
     std::unordered_map<int, double> distance;
     std::multiset<State> queue;
     std::set<int> closed;
 public:
-    ReverseResumableAStar(const Graph &graph, const std::vector<Mobile> &mobiles);
+    ReverseResumableAStar(std::shared_ptr<Graph> graph, const std::vector<Mobile> &mobiles);
     ~ReverseResumableAStar();
     
     void init(int mobile, int from, int to);

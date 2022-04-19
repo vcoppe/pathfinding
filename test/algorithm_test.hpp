@@ -58,9 +58,9 @@ protected:
             this->mobiles.push_back({AGV, 0.8, 0.8, 1});
         }
 
-        this->reservationTable = std::make_shared<ReservationTable>(*graph, mobiles);
-        this->reverseResumableAStar = std::make_shared<ReverseResumableAStar>(*graph, mobiles);
-        this->planner = std::make_shared<SafeIntervalPathPlanning>(*graph, mobiles, this->reservationTable, this->reverseResumableAStar);
+        this->reservationTable = std::make_shared<ReservationTable>(graph, mobiles);
+        this->reverseResumableAStar = std::make_shared<ReverseResumableAStar>(graph, mobiles);
+        this->planner = std::make_shared<SafeIntervalPathPlanning>(graph, mobiles, this->reservationTable, this->reverseResumableAStar);
     }
 
     virtual void TearDown()

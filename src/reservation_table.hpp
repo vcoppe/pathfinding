@@ -13,7 +13,7 @@
 class ReservationTable
 {
 private:
-    Graph graph;
+    std::shared_ptr<Graph> graph;
     const std::vector<Mobile> mobiles;
     std::vector<ZoneCapacityConstraint> constraints;
     std::unordered_map<int, Path> paths;
@@ -24,7 +24,7 @@ private:
     Interval getCollisionInterval(int mobile, int from, int to, const std::tuple<Polygon, Polygon, Polygon> &edgePolygons,
         const std::tuple<Polygon, Polygon, Polygon> &movePolygons, const TimedPosition &moveStart, const TimedPosition &moveEnd);
 public:
-    ReservationTable(const Graph &graph, const std::vector<Mobile> &mobiles);
+    ReservationTable(std::shared_ptr<Graph> graph, const std::vector<Mobile> &mobiles);
     ~ReservationTable();
 
     void addZoneCapacityConstraint(const std::vector<int> &weights, int capacity, const Polygon &polygon);

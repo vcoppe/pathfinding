@@ -2,7 +2,7 @@
 
 #include "reverse_resumable_a_star.hpp"
 
-ReverseResumableAStar::ReverseResumableAStar(const Graph &graph, const std::vector<Mobile> &mobiles)
+ReverseResumableAStar::ReverseResumableAStar(std::shared_ptr<Graph> graph, const std::vector<Mobile> &mobiles)
     : graph(graph)
     , mobiles(mobiles)
 {
@@ -56,7 +56,7 @@ double ReverseResumableAStar::getHeuristic(int vertex)
         this->queue.erase(it);
         this->closed.insert(current.vertex);
 
-        for (const auto &pair : this->graph.getReverseEdges(current.vertex))
+        for (const auto &pair : this->graph->getReverseEdges(current.vertex))
         {
             const auto &edge = pair.second;
 
@@ -65,7 +65,7 @@ double ReverseResumableAStar::getHeuristic(int vertex)
                 continue;
             }
 
-            auto edgeCost = this->graph.getCost(edge, this->mobiles[this->mobile]);
+            auto edgeCost = this->graph->getCost(edge, this->mobiles[this->mobile]);
 
             double successorDistance = current.g + edgeCost;
 
@@ -73,7 +73,7 @@ double ReverseResumableAStar::getHeuristic(int vertex)
             if (it == this->distance.end() || successorDistance < it->second)
             {
                 this->distance[edge.to] = successorDistance;
-                auto h = this->graph.distance(this->from, edge.to) / this->mobiles[this->mobile].maxSpeed;
+                auto h = this->graph->distance(this->from, edge.to) / this->mobiles[this->mobile].maxSpeed;
                 this->queue.insert({edge.to, successorDistance, h});
             }
         }

@@ -3,7 +3,7 @@
 
 #include "reservation_table.hpp"
 
-ReservationTable::ReservationTable(const Graph &graph, const std::vector<Mobile> &mobiles)
+ReservationTable::ReservationTable(std::shared_ptr<Graph> graph, const std::vector<Mobile> &mobiles)
     : graph(graph)
     , mobiles(mobiles)
     , rtree(std::make_unique<RTree>())
@@ -153,7 +153,7 @@ std::tuple<Polygon, Polygon, Polygon> ReservationTable::getBoundingPolygons(int 
 {
     if (start.vertex == end.vertex)
     {
-        auto position = this->graph.getPosition(start.vertex);
+        auto position = this->graph->getPosition(start.vertex);
 
         Point point(position.x, position.y);
 
@@ -172,7 +172,7 @@ std::tuple<Polygon, Polygon, Polygon> ReservationTable::getBoundingPolygons(int 
     }
     else
     {
-        auto startPosition = this->graph.getPosition(start.vertex), endPosition = this->graph.getPosition(end.vertex);
+        auto startPosition = this->graph->getPosition(start.vertex), endPosition = this->graph->getPosition(end.vertex);
         auto moveAngle = std::atan2(endPosition.y - startPosition.y, endPosition.x - startPosition.x);
 
         auto a = this->mobiles[mobile].length * std::cos(moveAngle) / 2;
@@ -212,21 +212,21 @@ Interval ReservationTable::getCollisionInterval(int mobile, int from, int to, co
     
     auto &collisionPolygon = collisionPolygons[0];
 
-    auto moveStartPosition = this->graph.getPosition(moveStart.vertex);
-    auto moveEndPosition = this->graph.getPosition(moveEnd.vertex);
-    auto moveDistance = this->graph.distance(moveStart.vertex, moveEnd.vertex);
+    auto moveStartPosition = this->graph->getPosition(moveStart.vertex);
+    auto moveEndPosition = this->graph->getPosition(moveEnd.vertex);
+    auto moveDistance = this->graph->distance(moveStart.vertex, moveEnd.vertex);
     auto moveDistanceBeforeCollision = moveDistance > 0 ? bg::distance(std::get<1>(movePolygons), collisionPolygon) : 0;
     auto moveDistanceAfterCollision = moveDistance > 0 ? bg::distance(collisionPolygon, std::get<2>(movePolygons)) : 0;
     auto moveTimeBeforeCollision = moveDistance > 0 ? (moveEnd.time - moveStart.time) * moveDistanceBeforeCollision / moveDistance : 0;
     auto moveTimeAfterCollision = moveDistance > 0 ? (moveEnd.time - moveStart.time) * moveDistanceAfterCollision / moveDistance : 0;
     auto moveAngle = moveDistance > 0 ? std::atan2(moveEndPosition.y - moveStartPosition.y, moveEndPosition.x - moveStartPosition.x) : 0;
 
-    auto edgeStartPosition = this->graph.getPosition(from);
-    auto egdeEndPosition = this->graph.getPosition(to);
-    auto edgeDistance = this->graph.distance(from, to);
+    auto edgeStartPosition = this->graph->getPosition(from);
+    auto egdeEndPosition = this->graph->getPosition(to);
+    auto edgeDistance = this->graph->distance(from, to);
     auto edgeDistanceBeforeCollision = edgeDistance > 0 ? bg::distance(std::get<1>(edgePolygons), collisionPolygon) : 0;
     auto edgeDistanceAfterCollision = edgeDistance > 0 ? bg::distance(collisionPolygon, std::get<2>(edgePolygons)) : 0;
-    auto edgeCost = edgeDistance > 0 ? this->graph.getCost(from, to, this->mobiles[mobile]) : 0;
+    auto edgeCost = edgeDistance > 0 ? this->graph->getCost(from, to, this->mobiles[mobile]) : 0;
     auto edgeTimeBeforeCollision = edgeDistance > 0 ? edgeCost * edgeDistanceBeforeCollision / edgeDistance : 0;
     auto edgeTimeAfterCollision = edgeDistance > 0 ? edgeCost * edgeDistanceAfterCollision / edgeDistance : 0;
     auto edgeAngle = edgeDistance > 0 ? std::atan2(egdeEndPosition.y - edgeStartPosition.y, egdeEndPosition.x - edgeStartPosition.x) : 0;

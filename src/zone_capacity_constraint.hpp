@@ -13,14 +13,14 @@
 class ZoneCapacityConstraint
 {
 private:
-    Graph graph;
+    std::shared_ptr<Graph> graph;
     const std::vector<Mobile> mobiles;
     const std::vector<int> &weights;
     const int capacity;
     std::vector<std::pair<double, int> > consumptions;
     std::vector<Interval> fullCapacityIntervals;
 public:
-    ZoneCapacityConstraint(const Graph &graph, const std::vector<Mobile> &mobiles, const std::vector<int> &weights, int capacity, const Polygon &polygon);
+    ZoneCapacityConstraint(std::shared_ptr<Graph> graph, const std::vector<Mobile> &mobiles, const std::vector<int> &weights, int capacity, const Polygon &polygon);
     ~ZoneCapacityConstraint();
 
     const Polygon polygon;

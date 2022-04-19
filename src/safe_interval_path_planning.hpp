@@ -43,7 +43,7 @@ private:
         }
     };
 
-    Graph graph;
+    std::shared_ptr<Graph> graph;
     const std::vector<Mobile> mobiles;
     std::shared_ptr<ReservationTable> reservationTable;
     std::shared_ptr<ReverseResumableAStar> reverseResumableAStar;
@@ -59,9 +59,9 @@ private:
     Path getPath(int mobile, const State &state);
     void reservePath(int mobile, const Path &path);
 public:
-    SafeIntervalPathPlanning(const Graph &graph, const std::vector<Mobile> &mobiles,
+    SafeIntervalPathPlanning(std::shared_ptr<Graph> graph, const std::vector<Mobile> &mobiles,
         std::shared_ptr<ReservationTable> reservationTable, std::shared_ptr<ReverseResumableAStar> reverseResumableAStar);
-    SafeIntervalPathPlanning(const Graph &graph, const std::vector<Mobile> &mobiles);
+    SafeIntervalPathPlanning(std::shared_ptr<Graph> graph, const std::vector<Mobile> &mobiles);
     ~SafeIntervalPathPlanning();
 
     void addZoneCapacityConstraint(const std::vector<int> &weights, int capacity, const Polygon &polygon);
