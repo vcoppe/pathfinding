@@ -6,7 +6,7 @@
 ReservationTable::ReservationTable(const Graph &graph, const std::vector<Mobile> &mobiles)
     : graph(graph)
     , mobiles(mobiles)
-    , rtree(nullptr)
+    , rtree(std::make_unique<RTree>())
 {
 }
 
@@ -14,11 +14,7 @@ ReservationTable::~ReservationTable()
 {
     this->paths.clear();
     this->polygons.clear();
-
-    if (this->rtree)
-    {
-        this->rtree->clear();
-    }
+    this->rtree->clear();
 }
 
 void ReservationTable::addZoneCapacityConstraint(const std::vector<int> &weights, int capacity, const Polygon &polygon)
@@ -75,6 +71,10 @@ std::vector<Interval> ReservationTable::getSafeIntervals(int mobile, int vertex)
     this->rtree->query(bgi::intersects(box), boost::make_function_output_iterator([&](auto const& value){
         auto id = value.second;
         auto otherMobile = id % this->mobiles.size();
+        if (mobile == otherMobile)
+        {
+            return;
+        }
         auto i = id / this->mobiles.size();
         auto collisionInterval = this->getCollisionInterval(
             mobile, vertex, vertex, polygons,
@@ -122,6 +122,10 @@ std::vector<Interval> ReservationTable::getCollisionIntervals(int mobile, int fr
     this->rtree->query(bgi::intersects(box), boost::make_function_output_iterator([&](auto const& value){
         auto id = value.second;
         auto otherMobile = id % this->mobiles.size();
+        if (mobile == otherMobile)
+        {
+            return;
+        }
         auto i = id / this->mobiles.size();
         auto collisionInterval = this->getCollisionInterval(
             mobile, from, to, polygons,
@@ -185,9 +189,9 @@ std::tuple<Polygon, Polygon, Polygon> ReservationTable::getBoundingPolygons(int 
         Point endFrontRight(endPosition.x + a + b, endPosition.y + c - d);
         Point endFrontLeft(endPosition.x + a - b, endPosition.y + c + d);
 
-        auto polygon = getPolygon({startRearRight, startRearLeft, endFrontLeft, endFrontRight, startRearRight});
-        auto startPolygon = getPolygon({startRearRight, startRearLeft, startFrontLeft, startFrontRight, startRearRight});
-        auto endPolygon = getPolygon({endRearRight, endRearLeft, endFrontLeft, endFrontRight, endRearRight});
+        auto polygon = getPolygon({startRearRight, startRearLeft, endFrontLeft, endFrontRight});
+        auto startPolygon = getPolygon({startRearRight, startRearLeft, startFrontLeft, startFrontRight});
+        auto endPolygon = getPolygon({endRearRight, endRearLeft, endFrontLeft, endFrontRight});
 
         return {polygon, startPolygon, endPolygon};
     }
@@ -197,19 +201,20 @@ std::tuple<Polygon, Polygon, Polygon> ReservationTable::getBoundingPolygons(int 
 Interval ReservationTable::getCollisionInterval(int mobile, int from, int to, const std::tuple<Polygon, Polygon, Polygon> &edgePolygons,
     const std::tuple<Polygon, Polygon, Polygon> &movePolygons, const TimedPosition &moveStart, const TimedPosition &moveEnd)
 {
-    std::deque<Polygon> collisionPolygons;
+    Interval result{std::numeric_limits<double>::max(), 0};
+    std::deque<Polygon> collisionPolygons, startCollisionPolygons, afterStartCollisionPolygons, endCollisionPolygons, beforeEndCollisionPolygons;
     bg::intersection(std::get<0>(edgePolygons), std::get<0>(movePolygons), collisionPolygons);
 
     if (collisionPolygons.empty())
     {
-        return {std::numeric_limits<double>::max(), 0};
+        return result;
     }
     
     auto &collisionPolygon = collisionPolygons[0];
 
     auto moveStartPosition = this->graph.getPosition(moveStart.vertex);
     auto moveEndPosition = this->graph.getPosition(moveEnd.vertex);
-    auto moveDistance = this->graph.manhattanDistance(moveStart.vertex, moveEnd.vertex);
+    auto moveDistance = this->graph.distance(moveStart.vertex, moveEnd.vertex);
     auto moveDistanceBeforeCollision = moveDistance > 0 ? bg::distance(std::get<1>(movePolygons), collisionPolygon) : 0;
     auto moveDistanceAfterCollision = moveDistance > 0 ? bg::distance(collisionPolygon, std::get<2>(movePolygons)) : 0;
     auto moveTimeBeforeCollision = moveDistance > 0 ? (moveEnd.time - moveStart.time) * moveDistanceBeforeCollision / moveDistance : 0;
@@ -218,7 +223,7 @@ Interval ReservationTable::getCollisionInterval(int mobile, int from, int to, co
 
     auto edgeStartPosition = this->graph.getPosition(from);
     auto egdeEndPosition = this->graph.getPosition(to);
-    auto edgeDistance = this->graph.manhattanDistance(from, to);
+    auto edgeDistance = this->graph.distance(from, to);
     auto edgeDistanceBeforeCollision = edgeDistance > 0 ? bg::distance(std::get<1>(edgePolygons), collisionPolygon) : 0;
     auto edgeDistanceAfterCollision = edgeDistance > 0 ? bg::distance(collisionPolygon, std::get<2>(edgePolygons)) : 0;
     auto edgeCost = edgeDistance > 0 ? this->graph.getCost(from, to, this->mobiles[mobile]) : 0;
@@ -226,17 +231,78 @@ Interval ReservationTable::getCollisionInterval(int mobile, int from, int to, co
     auto edgeTimeAfterCollision = edgeDistance > 0 ? edgeCost * edgeDistanceAfterCollision / edgeDistance : 0;
     auto edgeAngle = edgeDistance > 0 ? std::atan2(egdeEndPosition.y - edgeStartPosition.y, egdeEndPosition.x - edgeStartPosition.x) : 0;
     
-    Interval result;
     if (moveDistance > 0 && edgeDistance > 0 && std::abs(moveAngle - edgeAngle) < 1e-3) // travelling in same direction
     {
-        result.start = std::min(
-            moveStart.time + moveTimeBeforeCollision - edgeTimeBeforeCollision, 
-            moveEnd.time - moveTimeAfterCollision - (edgeCost - edgeTimeAfterCollision)
-        );
-        result.end = std::max(
-            moveStart.time + moveTimeBeforeCollision - edgeTimeBeforeCollision, 
-            moveEnd.time - moveTimeAfterCollision - (edgeCost - edgeTimeAfterCollision)
-        );
+        bg::intersection(std::get<1>(edgePolygons), collisionPolygon, startCollisionPolygons);
+        if (startCollisionPolygons.empty())
+        {
+            bg::difference(collisionPolygon, std::get<1>(movePolygons), afterStartCollisionPolygons);
+            if (afterStartCollisionPolygons.empty())
+            {
+                result.start = std::min(result.start, moveStart.time - edgeCost);
+            }
+            else
+            {
+                auto &afterStartCollisionPolygon = afterStartCollisionPolygons[0];
+                auto edgeDistanceBeforeAfterStartCollision = bg::distance(std::get<1>(edgePolygons), afterStartCollisionPolygon);
+                auto edgeTimeBeforeAfterStartCollision = edgeCost * edgeDistanceBeforeAfterStartCollision / edgeDistance;
+                result.start = std::min(result.start, moveStart.time - edgeTimeBeforeAfterStartCollision);
+            }
+            result.end = std::max(result.end, moveStart.time - edgeTimeBeforeCollision);
+        }
+        else
+        {
+            bg::difference(collisionPolygon, std::get<1>(edgePolygons), afterStartCollisionPolygons);
+            if (afterStartCollisionPolygons.empty())
+            {
+                result.end = std::max(result.end, moveEnd.time);
+            }
+            else
+            {
+                auto &afterStartCollisionPolygon = afterStartCollisionPolygons[0];
+                auto moveDistanceBeforeAfterStartCollision = bg::distance(std::get<1>(movePolygons), afterStartCollisionPolygon);
+                auto moveTimeBeforeAfterStartCollision = (moveEnd.time - moveStart.time) * moveDistanceBeforeAfterStartCollision / moveDistance;
+                result.end = std::max(result.end, moveStart.time + moveTimeBeforeAfterStartCollision);
+            }
+
+            result.start = std::min(result.start, moveStart.time + moveTimeBeforeCollision);
+        }
+
+        bg::intersection(std::get<2>(edgePolygons), collisionPolygon, endCollisionPolygons);
+        if (endCollisionPolygons.empty())
+        {
+            bg::difference(collisionPolygon, std::get<2>(movePolygons), beforeEndCollisionPolygons);
+            if (beforeEndCollisionPolygons.empty())
+            {
+                result.end = std::max(result.end, moveEnd.time);
+            }
+            else
+            {
+                auto &beforeEndCollisionPolygon = beforeEndCollisionPolygons[0];
+                auto edgeDistanceAfterBeforeEndCollision = bg::distance(beforeEndCollisionPolygon, std::get<2>(edgePolygons));
+                auto edgeTimeAfterBeforeEndCollision = edgeCost * edgeDistanceAfterBeforeEndCollision / edgeDistance;
+                result.end = std::max(result.end, moveEnd.time - (edgeCost - edgeTimeAfterBeforeEndCollision));
+            }
+
+            result.start = std::min(result.start, moveEnd.time - (edgeCost - edgeTimeAfterCollision));
+        }
+        else
+        {
+            bg::difference(collisionPolygon, std::get<2>(edgePolygons), beforeEndCollisionPolygons);
+            if (beforeEndCollisionPolygons.empty())
+            {
+                result.start = std::min(result.start, moveEnd.time - edgeCost);
+            }
+            else
+            {
+                auto &beforeEndCollisionPolygon = beforeEndCollisionPolygons[0];
+                auto moveDistanceAfterBeforeEndCollision = bg::distance(beforeEndCollisionPolygon, std::get<2>(movePolygons));
+                auto moveTimeAfterBeforeEndCollision = (moveEnd.time - moveStart.time) * moveDistanceAfterBeforeEndCollision / moveDistance;
+                result.start = std::min(result.start, moveEnd.time - moveTimeAfterBeforeEndCollision);
+            }
+
+            result.end = std::max(result.end, moveEnd.time - moveTimeAfterCollision);
+        }
     }
     else
     {

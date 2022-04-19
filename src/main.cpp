@@ -5,7 +5,7 @@
 #include "structs.hpp"
 #include "utils.hpp"
 
-bool crossingCondition(const Mobile &mobile)
+/*bool crossingCondition(const Mobile &mobile)
 {
     return true;
 }
@@ -23,7 +23,7 @@ double costFunction(const Mobile &mobile, double distance)
         default:
             break;
     }
-}
+}*/
 
 /*signed main() {
     std::vector<Mobile> mobiles;

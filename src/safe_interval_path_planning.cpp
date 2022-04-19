@@ -2,11 +2,20 @@
 
 #include "safe_interval_path_planning.hpp"
 
+SafeIntervalPathPlanning::SafeIntervalPathPlanning(const Graph &graph, const std::vector<Mobile> &mobiles,
+        std::shared_ptr<ReservationTable> reservationTable, std::shared_ptr<ReverseResumableAStar> reverseResumableAStar)
+    : graph(graph)
+    , mobiles(mobiles)
+    , reservationTable(reservationTable)
+    , reverseResumableAStar(reverseResumableAStar)
+{
+}
+
 SafeIntervalPathPlanning::SafeIntervalPathPlanning(const Graph &graph, const std::vector<Mobile> &mobiles)
     : graph(graph)
     , mobiles(mobiles)
-    , reservationTable(graph, mobiles)
-    , reverseResumableAStar(graph, mobiles)
+    , reservationTable(std::make_shared<ReservationTable>(graph, mobiles))
+    , reverseResumableAStar(std::make_shared<ReverseResumableAStar>(graph, mobiles))
 {
 }
 
@@ -21,7 +30,7 @@ SafeIntervalPathPlanning::~SafeIntervalPathPlanning()
 
 void SafeIntervalPathPlanning::addZoneCapacityConstraint(const std::vector<int> &weights, int capacity, const Polygon &polygon)
 {
-    this->reservationTable.addZoneCapacityConstraint(weights, capacity, polygon);   
+    this->reservationTable->addZoneCapacityConstraint(weights, capacity, polygon);   
 }
 
 Path SafeIntervalPathPlanning::plan(int mobile, int from, int to, double start)
@@ -32,8 +41,8 @@ Path SafeIntervalPathPlanning::plan(int mobile, int from, int to, double start)
         this->paths.erase(it);
     }
 
-    this->reservationTable.update(this->paths);
-    this->reverseResumableAStar.init(mobile, from, to);
+    this->reservationTable->update(this->paths);
+    this->reverseResumableAStar->init(mobile, from, to);
 
     auto path = this->findPath(mobile, from, to, start);
     this->reservePath(mobile, path);
@@ -48,7 +57,7 @@ Path SafeIntervalPathPlanning::findPath(int mobile, int from, int to, double sta
     this->queue.clear();
     this->parent.clear();
 
-    auto rootSafeIntervals = this->reservationTable.getSafeIntervals(mobile, from);
+    auto rootSafeIntervals = this->reservationTable->getSafeIntervals(mobile, from);
     auto it = std::lower_bound(rootSafeIntervals.begin(), rootSafeIntervals.end(), start, [](const Interval& interval, double value){
         return interval.end < value;
     });
@@ -106,10 +115,10 @@ void SafeIntervalPathPlanning::getSuccessors(int mobile, const State &state)
         }
 
         auto edgeCost = this->graph.getCost(edge, this->mobiles[mobile]);
-        auto h = this->reverseResumableAStar.getHeuristic(edge.to);
+        auto h = this->reverseResumableAStar->getHeuristic(edge.to);
 
-        auto safeIntervals = this->reservationTable.getSafeIntervals(mobile, edge.to);
-        auto collisionIntervals = this->reservationTable.getCollisionIntervals(mobile, edge.from, edge.to);
+        auto safeIntervals = this->reservationTable->getSafeIntervals(mobile, edge.to);
+        auto collisionIntervals = this->reservationTable->getCollisionIntervals(mobile, edge.from, edge.to);
 
         for (int intervalId = 0; intervalId < safeIntervals.size(); ++intervalId)
         {

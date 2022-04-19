@@ -5,6 +5,14 @@
 
 using namespace testing;
 
+TEST(UtilsTest, MergeNoIntervals) {
+    std::vector<Interval> intervals;
+
+    mergeIntervals(intervals);
+
+    EXPECT_THAT(intervals, IsEmpty());
+}
+
 TEST(UtilsTest, MergeSingleInterval) {
     std::vector<Interval> intervals{{0, 1}};
 

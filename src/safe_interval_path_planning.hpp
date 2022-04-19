@@ -45,10 +45,10 @@ private:
 
     Graph graph;
     const std::vector<Mobile> mobiles;
-    ReservationTable reservationTable;
-    ReverseResumableAStar reverseResumableAStar;
+    std::shared_ptr<ReservationTable> reservationTable;
+    std::shared_ptr<ReverseResumableAStar> reverseResumableAStar;
     std::unordered_map<int, Path> paths;
-    std::set<State> queue;
+    std::multiset<State> queue;
     std::unordered_map<State, double, StateHasher> distance;
     std::unordered_set<State, StateHasher> visited;
     std::unordered_map<State, State, StateHasher> parent;
@@ -59,6 +59,8 @@ private:
     Path getPath(int mobile, const State &state);
     void reservePath(int mobile, const Path &path);
 public:
+    SafeIntervalPathPlanning(const Graph &graph, const std::vector<Mobile> &mobiles,
+        std::shared_ptr<ReservationTable> reservationTable, std::shared_ptr<ReverseResumableAStar> reverseResumableAStar);
     SafeIntervalPathPlanning(const Graph &graph, const std::vector<Mobile> &mobiles);
     ~SafeIntervalPathPlanning();
 

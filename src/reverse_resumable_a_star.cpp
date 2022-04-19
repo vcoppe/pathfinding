@@ -73,7 +73,7 @@ double ReverseResumableAStar::getHeuristic(int vertex)
             if (it == this->distance.end() || successorDistance < it->second)
             {
                 this->distance[edge.to] = successorDistance;
-                auto h = this->graph.manhattanDistance(this->from, edge.to) / this->mobiles[this->mobile].maxSpeed;
+                auto h = this->graph.distance(this->from, edge.to) / this->mobiles[this->mobile].maxSpeed;
                 this->queue.insert({edge.to, successorDistance, h});
             }
         }

@@ -64,7 +64,7 @@ public:
     Position getPosition(int vertex);
     const std::unordered_map<int, Edge> getEdges(int vertex);
     const std::unordered_map<int, Edge> getReverseEdges(int vertex);
-    double manhattanDistance(int from, int to);
+    double distance(int from, int to);
     double getCost(const Edge &edge, const Mobile &mobile);
     double getCost(int from, int to, const Mobile &mobile);
     void setEdgeCrossingCondition(int from, int to, const EdgeCrossingCondition &crossingCondition);

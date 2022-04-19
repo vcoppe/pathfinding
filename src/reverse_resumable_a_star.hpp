@@ -29,7 +29,7 @@ private:
     const std::vector<Mobile> mobiles;
     int mobile, from;
     std::unordered_map<int, double> distance;
-    std::set<State> queue;
+    std::multiset<State> queue;
     std::set<int> closed;
 public:
     ReverseResumableAStar(const Graph &graph, const std::vector<Mobile> &mobiles);

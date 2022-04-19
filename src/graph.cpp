@@ -51,7 +51,7 @@ const std::unordered_map<int, Edge> Graph::getReverseEdges(int vertex)
     return this->reverseEdges[vertex];
 }
 
-double Graph::manhattanDistance(int from, int to)
+double Graph::distance(int from, int to)
 {
     if (from == to)
     {
@@ -65,7 +65,7 @@ double Graph::manhattanDistance(int from, int to)
 
 double Graph::getCost(const Edge &edge, const Mobile &mobile)
 {
-    return edge.costFunction(mobile, this->manhattanDistance(edge.from, edge.to));
+    return edge.costFunction(mobile, this->distance(edge.from, edge.to));
 }
 
 double Graph::getCost(int from, int to, const Mobile &mobile)
@@ -76,7 +76,7 @@ double Graph::getCost(int from, int to, const Mobile &mobile)
     }
     else
     {
-        return this->edges[from][to].costFunction(mobile, this->manhattanDistance(from, to));
+        return this->edges[from][to].costFunction(mobile, this->distance(from, to));
     }
 }
 
