@@ -28,9 +28,9 @@ SafeIntervalPathPlanning::~SafeIntervalPathPlanning()
     this->parent.clear();
 }
 
-void SafeIntervalPathPlanning::addZoneCapacityConstraint(const std::vector<int> &weights, int capacity, const Polygon &polygon)
+void SafeIntervalPathPlanning::addZoneCapacityConstraint(const std::vector<int> &weights, int capacity, const Polygon &polygon, double z)
 {
-    this->reservationTable->addZoneCapacityConstraint(weights, capacity, polygon);   
+    this->reservationTable->addZoneCapacityConstraint(weights, capacity, polygon, z);   
 }
 
 Path SafeIntervalPathPlanning::plan(int mobile, int from, int to, double start)

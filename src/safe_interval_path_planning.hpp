@@ -64,7 +64,7 @@ public:
     SafeIntervalPathPlanning(std::shared_ptr<Graph> graph, const std::vector<Mobile> &mobiles);
     ~SafeIntervalPathPlanning();
 
-    void addZoneCapacityConstraint(const std::vector<int> &weights, int capacity, const Polygon &polygon);
+    void addZoneCapacityConstraint(const std::vector<int> &weights, int capacity, const Polygon &polygon, double z);
     Path plan(int mobile, int from, int to, double start);
 };
 

@@ -17,8 +17,9 @@ private:
     const std::vector<Mobile> mobiles;
     std::vector<ZoneCapacityConstraint> constraints;
     std::unordered_map<int, Path> paths;
+    std::unordered_map<double, std::vector<Value> > values;
     std::unordered_map<int, std::tuple<Polygon, Polygon, Polygon> > polygons;
-    std::unique_ptr<RTree> rtree;
+    std::unordered_map<int, RTree> rtrees;
 
     std::tuple<Polygon, Polygon, Polygon> getBoundingPolygons(int mobile, const TimedPosition &start, const TimedPosition &end);
     Interval getCollisionInterval(int mobile, int from, int to, const std::tuple<Polygon, Polygon, Polygon> &edgePolygons,
@@ -27,7 +28,7 @@ public:
     ReservationTable(std::shared_ptr<Graph> graph, const std::vector<Mobile> &mobiles);
     ~ReservationTable();
 
-    void addZoneCapacityConstraint(const std::vector<int> &weights, int capacity, const Polygon &polygon);
+    void addZoneCapacityConstraint(const std::vector<int> &weights, int capacity, const Polygon &polygon, double z);
     void update(const std::unordered_map<int, Path> &paths);
     std::vector<Interval> getSafeIntervals(int mobile, int vertex);
     std::vector<Interval> getCollisionIntervals(int mobile, int from, int to);

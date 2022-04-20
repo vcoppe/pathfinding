@@ -16,7 +16,8 @@ TEST_F(AlgorithmTest, ZoneCapacityConstraint) {
             Point(1, 0),
             Point(1, GRID_SIZE-1),
             Point(GRID_SIZE-2, GRID_SIZE-1)
-        })
+        }),
+        0
     );
 
     auto start1 = getVertexIndex(0, 0), goal1 = getVertexIndex(GRID_SIZE-1, 0);

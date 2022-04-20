@@ -6,7 +6,6 @@
 ReservationTable::ReservationTable(std::shared_ptr<Graph> graph, const std::vector<Mobile> &mobiles)
     : graph(graph)
     , mobiles(mobiles)
-    , rtree(std::make_unique<RTree>())
 {
 }
 
@@ -14,19 +13,19 @@ ReservationTable::~ReservationTable()
 {
     this->paths.clear();
     this->polygons.clear();
-    this->rtree->clear();
+    this->rtrees.clear();
 }
 
-void ReservationTable::addZoneCapacityConstraint(const std::vector<int> &weights, int capacity, const Polygon &polygon)
+void ReservationTable::addZoneCapacityConstraint(const std::vector<int> &weights, int capacity, const Polygon &polygon, double z)
 {
-    this->constraints.push_back(ZoneCapacityConstraint(this->graph, this->mobiles, weights, capacity, polygon));
+    this->constraints.push_back(ZoneCapacityConstraint(this->graph, this->mobiles, weights, capacity, polygon, z));
 }
 
 void ReservationTable::update(const std::unordered_map<int, Path> &paths)
 {
     this->paths = paths;
+    this->values.clear();
     this->polygons.clear();
-    std::vector<Value> values;
     Box box;
 
     for (auto &constraint : this->constraints)
@@ -42,7 +41,21 @@ void ReservationTable::update(const std::unordered_map<int, Path> &paths)
             auto polygons = this->getBoundingPolygons(mobile, path.timedPositions[i], path.timedPositions[i+1]);
             bg::envelope(std::get<0>(polygons), box);
             auto id = mobile + this->mobiles.size() * i;
-            values.push_back({box, id});
+
+            auto startZ = this->graph->getZ(path.timedPositions[i].vertex), endZ = this->graph->getZ(path.timedPositions[i+1].vertex);
+            if (!this->values.contains(startZ))
+            {
+                this->values[startZ] = std::vector<Value>();
+            }
+            if (!this->values.contains(endZ))
+            {
+                this->values[endZ] = std::vector<Value>();
+            }
+            this->values[startZ].push_back({box, id});
+            if (startZ != endZ)
+            {
+                this->values[endZ].push_back({box, id});
+            }
             this->polygons[id] = polygons;
 
             for (auto &constraint : this->constraints)
@@ -57,34 +70,41 @@ void ReservationTable::update(const std::unordered_map<int, Path> &paths)
         constraint.build();
     }
 
-    this->rtree = std::make_unique<RTree>(values);
+    for (const auto &pair : this->values)
+    {
+        this->rtrees[pair.first] = RTree(pair.second);
+    }
 }
 
 std::vector<Interval> ReservationTable::getSafeIntervals(int mobile, int vertex)
 {
     TimedPosition start{vertex, 0}, end{vertex, std::numeric_limits<double>::max()};
+    auto z = this->graph->getZ(vertex);
     auto polygons = this->getBoundingPolygons(mobile, start, end);
     Box box;
     bg::envelope(std::get<0>(polygons), box);
 
     std::vector<Interval> collisionIntervals;
-    this->rtree->query(bgi::intersects(box), boost::make_function_output_iterator([&](auto const& value){
-        auto id = value.second;
-        auto otherMobile = id % this->mobiles.size();
-        if (mobile == otherMobile)
-        {
-            return;
-        }
-        auto i = id / this->mobiles.size();
-        auto collisionInterval = this->getCollisionInterval(
-            mobile, vertex, vertex, polygons,
-            this->polygons[id], this->paths[otherMobile].timedPositions[i], this->paths[otherMobile].timedPositions[i+1]
-        );
-        if (collisionInterval.start < collisionInterval.end)
-        {
-            collisionIntervals.push_back(collisionInterval);
-        }
-    }));
+    if (this->rtrees.contains(z))
+    {
+        this->rtrees[z].query(bgi::intersects(box), boost::make_function_output_iterator([&](auto const& value){
+            auto id = value.second;
+            auto otherMobile = id % this->mobiles.size();
+            if (mobile == otherMobile)
+            {
+                return;
+            }
+            auto i = id / this->mobiles.size();
+            auto collisionInterval = this->getCollisionInterval(
+                mobile, vertex, vertex, polygons,
+                this->polygons[id], this->paths[otherMobile].timedPositions[i], this->paths[otherMobile].timedPositions[i+1]
+            );
+            if (collisionInterval.start < collisionInterval.end)
+            {
+                collisionIntervals.push_back(collisionInterval);
+            }
+        }));
+    }
 
     for (auto &constraint : this->constraints)
     {
@@ -114,28 +134,40 @@ std::vector<Interval> ReservationTable::getSafeIntervals(int mobile, int vertex)
 std::vector<Interval> ReservationTable::getCollisionIntervals(int mobile, int from, int to)
 {
     TimedPosition start{from, 0}, end{to, std::numeric_limits<double>::max()};
+    auto startZ = this->graph->getZ(from), endZ = this->graph->getZ(to);
+    std::vector<double> zs = {startZ};
+    if (startZ != endZ)
+    {
+        zs.push_back(endZ);
+    }
     auto polygons = this->getBoundingPolygons(mobile, start, end);
     Box box;
     bg::envelope(std::get<0>(polygons), box);
 
     std::vector<Interval> collisionIntervals;
-    this->rtree->query(bgi::intersects(box), boost::make_function_output_iterator([&](auto const& value){
-        auto id = value.second;
-        auto otherMobile = id % this->mobiles.size();
-        if (mobile == otherMobile)
+    for (auto z : zs)
+    {
+        if (this->rtrees.contains(z))
         {
-            return;
+            this->rtrees[z].query(bgi::intersects(box), boost::make_function_output_iterator([&](auto const& value){
+                auto id = value.second;
+                auto otherMobile = id % this->mobiles.size();
+                if (mobile == otherMobile)
+                {
+                    return;
+                }
+                auto i = id / this->mobiles.size();
+                auto collisionInterval = this->getCollisionInterval(
+                    mobile, from, to, polygons,
+                    this->polygons[id], this->paths[otherMobile].timedPositions[i], this->paths[otherMobile].timedPositions[i+1]
+                );
+                if (collisionInterval.start < collisionInterval.end)
+                {
+                    collisionIntervals.push_back(collisionInterval);
+                }
+            }));
         }
-        auto i = id / this->mobiles.size();
-        auto collisionInterval = this->getCollisionInterval(
-            mobile, from, to, polygons,
-            this->polygons[id], this->paths[otherMobile].timedPositions[i], this->paths[otherMobile].timedPositions[i+1]
-        );
-        if (collisionInterval.start < collisionInterval.end)
-        {
-            collisionIntervals.push_back(collisionInterval);
-        }
-    }));
+    }
 
     for (auto &constraint : this->constraints)
     {

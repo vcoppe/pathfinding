@@ -16,11 +16,11 @@ private:
     std::shared_ptr<Graph> graph;
     const std::vector<Mobile> mobiles;
     const std::vector<int> &weights;
-    const int capacity;
+    const int capacity, z;
     std::vector<std::pair<double, int> > consumptions;
     std::vector<Interval> fullCapacityIntervals;
 public:
-    ZoneCapacityConstraint(std::shared_ptr<Graph> graph, const std::vector<Mobile> &mobiles, const std::vector<int> &weights, int capacity, const Polygon &polygon);
+    ZoneCapacityConstraint(std::shared_ptr<Graph> graph, const std::vector<Mobile> &mobiles, const std::vector<int> &weights, int capacity, const Polygon &polygon, double z);
     ~ZoneCapacityConstraint();
 
     const Polygon polygon;

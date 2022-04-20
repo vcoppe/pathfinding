@@ -1,11 +1,12 @@
 #include "zone_capacity_constraint.hpp"
 
-ZoneCapacityConstraint::ZoneCapacityConstraint(std::shared_ptr<Graph> graph, const std::vector<Mobile> &mobiles, const std::vector<int> &weights, int capacity, const Polygon &polygon)
+ZoneCapacityConstraint::ZoneCapacityConstraint(std::shared_ptr<Graph> graph, const std::vector<Mobile> &mobiles, const std::vector<int> &weights, int capacity, const Polygon &polygon, double z)
     : graph(graph)
     , mobiles(mobiles)
     , weights(weights)
     , capacity(capacity)
     , polygon(polygon)
+    , z(z)
 {
 }
 
@@ -20,6 +21,11 @@ void ZoneCapacityConstraint::reset()
 
 void ZoneCapacityConstraint::add(int mobile, const TimedPosition &start, const TimedPosition &end, const std::tuple<Polygon, Polygon, Polygon> &polygons)
 {
+    if (this->graph->getZ(start.vertex) != this->z && this->graph->getZ(end.vertex) != this->z)
+    {
+        return;
+    }
+
     std::deque<Polygon> collisionPolygons;
     bg::intersection(this->polygon, std::get<0>(polygons), collisionPolygons);
 
@@ -38,7 +44,6 @@ void ZoneCapacityConstraint::add(int mobile, const TimedPosition &start, const T
 
     this->consumptions.push_back({start.time + timeBeforeZone, this->weights[mobile]});
     this->consumptions.push_back({end.time - timeAfterZone, - this->weights[mobile]});
-
 }
 
 void ZoneCapacityConstraint::build()

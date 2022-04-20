@@ -62,6 +62,9 @@ public:
     void add(Edge edge);
     int size() const;
     Position getPosition(int vertex);
+    double getX(int vertex);
+    double getY(int vertex);
+    double getZ(int vertex);
     const std::unordered_map<int, Edge> getEdges(int vertex);
     const std::unordered_map<int, Edge> getReverseEdges(int vertex);
     double distance(int from, int to);

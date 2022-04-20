@@ -41,6 +41,21 @@ Position Graph::getPosition(int vertex)
     return this->positions[vertex];
 }
 
+double Graph::getX(int vertex)
+{
+    return this->positions[vertex].x;
+}
+
+double Graph::getY(int vertex)
+{
+    return this->positions[vertex].y;
+}
+
+double Graph::getZ(int vertex)
+{
+    return this->positions[vertex].z;
+}
+
 const std::unordered_map<int, Edge> Graph::getEdges(int vertex)
 {
     return this->edges[vertex];
